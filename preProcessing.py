@@ -3,12 +3,9 @@
 import re
 import numpy as np
 
-
 def make_batches(size, batch_size):
     nb_batch = int(np.ceil(size / float(batch_size)))  # ceil: 返回不小于x的最小整数。  batch=3178
     return [(i * batch_size, min(size, (i + 1) * batch_size)) for i in range(nb_batch)]
-
-
 def pad_2d_matrix(word_idx_batch, max_length=None, dtype=np.int32):
     if max_length is None: max_length = np.max([len(cur_in_val) for cur_in_val in word_idx_batch])
     batch_size = len(word_idx_batch)
@@ -20,6 +17,7 @@ def pad_2d_matrix(word_idx_batch, max_length=None, dtype=np.int32):
         if kept_length > max_length: kept_length = max_length
         out_val[i, :kept_length] = cur_in_val[:kept_length]
     return out_val
+
 
 
 class DataStream(object):
@@ -44,18 +42,17 @@ class DataStream(object):
                 word_idx_1 = word_idx_1[:max_sent_length]
             if len(word_idx_2) > max_sent_length:
                 word_idx_2 = word_idx_2[:max_sent_length]
-            instances.append((label, sentence1, sentence2, label_id, word_idx_1, word_idx_2))
+            instances.append((label_id, word_idx_1, word_idx_2))
+
+        ## section 2: sort
         if isSort: instances = sorted(instances, key=lambda instance: (
-            len(instance[4]), len(instance[5])))  # sort instances based on length
+            len(instance[1]), len(instance[2])))  # sort instances based on length
         self.num_instances = len(instances)
 
-        ## section 2
+        ## section 3
         batch_spans = make_batches(self.num_instances, batch_size)  # list[(0,60),(60,120),(...)]
         self.batches = []
         for batch_index, (batch_start, batch_end) in enumerate(batch_spans):
-            label_batch = []
-            sent1_batch = []
-            sent2_batch = []
             label_id_batch = []
             word_idx_1_batch = []
             word_idx_2_batch = []
@@ -64,17 +61,14 @@ class DataStream(object):
 
             ##  word_idx_1: sentence1的list表示
             for i in iter(range(batch_start, batch_end)):
-                (label, sentence1, sentence2, label_id, word_idx_1, word_idx_2) = instances[i]
-                label_batch.append(label)
-                sent1_batch.append(sentence1)
-                sent2_batch.append(sentence2)
+                (label_id, word_idx_1, word_idx_2) = instances[i]
                 label_id_batch.append(label_id)
                 word_idx_1_batch.append(word_idx_1)
                 word_idx_2_batch.append(word_idx_2)
                 sent1_length_batch.append(len(word_idx_1))
                 sent2_length_batch.append(len(word_idx_2))
 
-            cur_batch_size = len(label_batch)
+            cur_batch_size = len(label_id_batch)
             if cur_batch_size == 0:
                 continue
 
@@ -91,8 +85,7 @@ class DataStream(object):
             sent2_length_batch = np.array(sent2_length_batch)
 
             self.batches.append(
-                (label_batch, sent1_batch, sent2_batch, label_id_batch, word_idx_1_batch, word_idx_2_batch,
-                 sent1_length_batch, sent2_length_batch))
+                (label_id_batch, word_idx_1_batch, word_idx_2_batch, sent1_length_batch, sent2_length_batch))
 
         instances = None
         self.num_batch = len(self.batches)
@@ -102,9 +95,8 @@ class DataStream(object):
         self.isLoop = isLoop
         self.cur_pointer = 0
 
-
     def nextBatch(self):
-        if self.cur_pointer>=self.num_batch:
+        if self.cur_pointer >= self.num_batch:
             if not self.isLoop: return None
             self.cur_pointer = 0
             if self.isShuffle: np.random.shuffle(self.index_array)
