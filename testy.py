@@ -5,11 +5,11 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 import tensorflow as tf
 from vocab_utils import Vocab
-import os
 import numpy as np
+import time
 
 max_len_left = max_len_right = 25
-
+root_dir="/home/haojianyong/file_1/pairCNN-Ranking-master"
 
 def pad_sentences(sentences, sequence_length, padding_word="<PAD/>"):
     padded_sentences = []
@@ -53,16 +53,18 @@ def batch_iter(all_data, batch_size, num_epochs, shuffle=False):
     return np.array(total), num_batches_per_epoch
 
 
+
+
 print("Loading data...")
 wordVocab = Vocab()
-wordVocab.fromText_format3("./", "data/wordvec.vec")
+wordVocab.fromText_format3(root_dir, "data/wordvec.vec")
 vocab_tuple = (wordVocab.word2id, wordVocab.id2word)
 
 data_label = []
 data_left = []
 data_right = []
-# testPath=os.path.join("./", 'data/test.txt')
-testPath="/home/haojianyong/file_1/context_similarity/guangFaFAQ/guangFaFAQ_nonmatch_cut.txt"
+
+testPath = "/home/haojianyong/file_1/context_similarity/guangFaFAQ/guangFaFAQ_nonmatch_cut.txt"
 for line in open(testPath):
     line = line.strip().strip("\n").split("\t")
     if len(line) < 3: continue
@@ -80,7 +82,7 @@ x_left_dev, x_right_dev, y_dev = build_input_data(data_left, data_right, data_la
 
 g_graph = tf.Graph()
 with g_graph.as_default():
-    with tf.gfile.GFile('runs/model_cnn.pb', "rb") as f:
+    with tf.gfile.GFile(root_dir+'/runs/model_cnn.pb', "rb") as f:
         graph_def = tf.GraphDef()  # 先创建一个空的图
         graph_def.ParseFromString(f.read())  # 加载proto-buf中的模型
         tf.import_graph_def(graph_def, name='')  # 最后复制pre-def图的到默认图中
@@ -96,10 +98,12 @@ with g_graph.as_default():
 
         output_prob = sess.graph.get_tensor_by_name("output/prob:0")
 
-        with open("data/result_nonmatch.txt", "w") as out_op:
-            batches_dev, _ = batch_iter(
-                list(zip(x_left_dev, x_right_dev, y_dev)), 64, num_epochs=1, shuffle=False)
+        with open(root_dir+"/data/result_nonmatch.txt", "w") as out_op:
+            t1 = time.time()
+            batches_dev, _ = batch_iter(list(zip(x_left_dev, x_right_dev, y_dev)), 64, num_epochs=1, shuffle=False)
+
             accuracies = []
+
             for idx, batch_dev in enumerate(batches_dev):
                 x_left_batch_dev, x_right_batch_dev, y_batch_dev = zip(*batch_dev)
 
@@ -108,13 +112,14 @@ with g_graph.as_default():
                                                                                      input_y: y_batch_dev,
                                                                                      dropout_keep_prob: 1.0
                                                                                      })
-                accuracies.append(accuracy)
-                for i in range(len(y_batch_dev)):
-                    p = prob[i].tolist()
-                    y_label = y_batch_dev[i].tolist()
-                    if y_label[1] != [1 if p[1] >= 0.5 else 0][0]:
-                        result = str(y_label[1]) + "\t" + str(p[1]) + "\t" + " ".join(x1[i]) + "\t" + " ".join(
-                            x2[i]) + "\n"
-                        out_op.write(result)
-
-        print(np.mean(np.array(accuracies)))
+                # accuracies.append(accuracy)
+                # for i in range(len(y_batch_dev)):
+                #     p = prob[i].tolist()
+                #     y_label = y_batch_dev[i].tolist()
+                #     if y_label[1] != [1 if p[1] >= 0.5 else 0][0]:
+                #         result = str(y_label[1]) + "\t" + str(p[1]) + "\t" + " ".join(x1[i]) + "\t" + " ".join(
+                #             x2[i]) + "\n"
+                #         out_op.write(result)
+            t2=time.time()
+            print((t2-t1)/len(x_label)*1000,"ms")
+        # print(np.mean(np.array(accuracies)))
