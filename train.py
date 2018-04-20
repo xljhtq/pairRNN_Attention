@@ -112,9 +112,11 @@ def main(_):
             sess.run(tf.global_variables_initializer())
 
             out_dir = os.path.abspath(os.path.join(FLAGS.train_dir, "runs"))
+            print(out_dir)
             if not os.path.exists(out_dir):
                 os.makedirs(out_dir)
             else:
+                print("delete runs/")
                 tf.gfile.DeleteRecursively(out_dir)
                 os.makedirs(out_dir)
 
@@ -162,9 +164,9 @@ def main(_):
 
             def overfit(dev_loss):
                 n = len(dev_loss)
-                if n < 6:
+                if n < 2:
                     return False
-                for i in range(n - 6, n):
+                for i in range(n - 2, n):
                     if dev_loss[i] > dev_loss[i - 1]:
                         return False
                 return True
@@ -175,8 +177,9 @@ def main(_):
                                                                FLAGS.num_epochs)
 
             # Training loop. For each batch...
-            dev_loss = []
+            dev_accuracy = []
             train_loss = 0
+            total_loss = []
             for batch in batches_epochs:
                 x1_batch, x2_batch, y_batch = zip(*batch)
                 feed_dict = {
@@ -189,6 +192,7 @@ def main(_):
                     [train_op, global_step, cnn.loss, cnn.accuracy],
                     feed_dict)
                 train_loss += loss
+
                 if current_step % 10000 == 0:
                     print("step {}, loss {:g}, acc {:g}".format(current_step, loss, accuracy))
                     sys.stdout.flush()
@@ -196,17 +200,19 @@ def main(_):
                 if (current_step + 1) % num_batches_per_epoch == 0 or (
                         current_step + 1) == num_batches_per_epoch * FLAGS.num_epochs:
                     print("One epoch, train_loss:", train_loss)
+                    total_loss.append(train_loss)
                     train_loss = 0
                     sys.stdout.flush()
 
                 if current_step % FLAGS.evaluate_every == 0:
                     print("\nEvaluation:")
                     loss, accuracy = dev_whole(x_left_dev, x_right_dev, y_dev)
-                    print("dev-aver, loss {:g}, acc {:g}".format(loss, accuracy))
-                    dev_loss.append(accuracy)
+                    dev_accuracy.append(accuracy)
                     print("Recently accuracy:")
-                    print (dev_loss[-10:])
-                    if overfit(dev_loss):
+                    print (dev_accuracy[-10:])
+                    print("Recently train_loss:")
+                    print(total_loss[-10:])
+                    if overfit(total_loss):
                         print ('Overfit!!')
                         break
                     print("")
@@ -215,7 +221,6 @@ def main(_):
                     path = saver.save(sess, checkpoint_prefix, global_step=current_step)
                     print("Saved model checkpoint to {}\n".format(path))
                     sys.stdout.flush()
-                    break
 
 
 if __name__ == '__main__':

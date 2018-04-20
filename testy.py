@@ -34,7 +34,7 @@ def build_input_data(data_left, data_right, label, vocab):
     return [out_left, out_right, out_y]
 
 
-def batch_iter(all_data, batch_size, num_epochs, shuffle=True):
+def batch_iter(all_data, batch_size, num_epochs, shuffle=False):
     total = []
     data = np.array(all_data)
     data_size = len(data)
@@ -49,7 +49,6 @@ def batch_iter(all_data, batch_size, num_epochs, shuffle=True):
         for batch_num in range(num_batches_per_epoch):
             start_index = batch_num * batch_size
             end_index = min((batch_num + 1) * batch_size, data_size)
-            # yield shuffled_data[start_index:end_index]
             total.append(shuffled_data[start_index:end_index])
     return np.array(total), num_batches_per_epoch
 
@@ -62,7 +61,9 @@ vocab_tuple = (wordVocab.word2id, wordVocab.id2word)
 data_label = []
 data_left = []
 data_right = []
-for line in open(os.path.join("./", 'data/test.txt')):
+# testPath=os.path.join("./", 'data/test.txt')
+testPath="/home/haojianyong/file_1/context_similarity/guangFaFAQ/guangFaFAQ_nonmatch_cut.txt"
+for line in open(testPath):
     line = line.strip().strip("\n").split("\t")
     if len(line) < 3: continue
     data_label.append(int(line[0]))
@@ -95,7 +96,7 @@ with g_graph.as_default():
 
         output_prob = sess.graph.get_tensor_by_name("output/prob:0")
 
-        with open("data/result.txt", "w") as out_op:
+        with open("data/result_nonmatch.txt", "w") as out_op:
             batches_dev, _ = batch_iter(
                 list(zip(x_left_dev, x_right_dev, y_dev)), 64, num_epochs=1, shuffle=False)
             accuracies = []
