@@ -164,10 +164,10 @@ def main(_):
 
             def overfit(dev_loss):
                 n = len(dev_loss)
-                if n < 2:
+                if n < 4:
                     return False
-                for i in range(n - 2, n):
-                    if dev_loss[i] < dev_loss[i - 1]:
+                for i in range(n - 4, n):
+                    if dev_loss[i] > dev_loss[i - 1]:
                         return False
                 return True
 
@@ -212,7 +212,7 @@ def main(_):
                     print (dev_accuracy[-10:])
                     print("Recently train_loss:")
                     print(total_loss[-10:])
-                    if overfit(total_loss):
+                    if overfit(dev_accuracy):
                         print ('Overfit!!')
                         break
                     print("")
