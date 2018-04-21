@@ -274,6 +274,7 @@ def main(_):
                     print('Saving model since it\'s the best so far')
                     best_accuracy = accuracy
                     saver.save(sess, best_path)
+            sys.stdout.flush()
 
     print("Best accuracy on dev set is %.2f" % best_accuracy)
 
