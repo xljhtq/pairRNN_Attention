@@ -32,6 +32,7 @@ class SentenceMatchDataStream(object):
             line = line.strip()
             if line.startswith('-'): continue
             items = re.split("\t", line)
+            if len(items) != 3: continue
             label = items[0]
             sentence1 = items[1].lower()
             sentence2 = items[2].lower()
