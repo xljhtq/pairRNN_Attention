@@ -104,7 +104,7 @@ def main(_):
 
             # Define Training procedure
             global_step = tf.Variable(0, name="global_step", trainable=False)
-            optimizer = tf.train.AdamOptimizer(1e-3)
+            optimizer = tf.train.AdamOptimizer(1e-4)
             grads_and_vars = optimizer.compute_gradients(cnn.loss)
             train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
 
@@ -232,7 +232,7 @@ if __name__ == '__main__':
     tf.flags.DEFINE_string("wordvec_path", "data/wordvec.vec", "wordvec_path")
     tf.flags.DEFINE_string("train_dir", "/home/haojianyong/file_1/pairCNN-Ranking-master/", "Training dir root")
     tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
-    tf.flags.DEFINE_integer("num_epochs", 200, "Number of training epochs (default: 200)")
+    tf.flags.DEFINE_integer("num_epochs", 30, "Number of training epochs (default: 200)")
     tf.flags.DEFINE_integer("max_len_left", 25, "max document length of left input")
     tf.flags.DEFINE_integer("max_len_right", 25, "max document length of right input")
     tf.flags.DEFINE_boolean("fix_word_vec", True, "fix_word_vec")
@@ -242,7 +242,7 @@ if __name__ == '__main__':
     tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size (default: 64)")
     tf.flags.DEFINE_integer("num_hidden", 100, "Number of hidden layer units (default: 100)")
     tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
-    tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda (default: 0.0)")
+    tf.flags.DEFINE_float("l2_reg_lambda", 0.01, "L2 regularizaion lambda (default: 0.0)")
     tf.flags.DEFINE_integer("most_words", 300000, "Most number of words in vocab (default: 300000)")
     # Training parameters
     tf.flags.DEFINE_integer("seed", 123, "Random seed (default: 123)")
