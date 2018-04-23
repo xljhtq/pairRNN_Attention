@@ -204,7 +204,8 @@ def main(_):
                     train_loss = 0
                     sys.stdout.flush()
 
-                if current_step % FLAGS.evaluate_every == 0:
+                if (current_step + 1) % num_batches_per_epoch == 0 or (
+                        current_step + 1) == num_batches_per_epoch * FLAGS.num_epochs:
                     print("\nEvaluation:")
                     loss, accuracy = dev_whole(x_left_dev, x_right_dev, y_dev)
                     dev_accuracy.append(accuracy)
@@ -217,7 +218,9 @@ def main(_):
                         break
                     print("")
                     sys.stdout.flush()
-                if current_step % FLAGS.checkpoint_every == 0:
+
+                if (current_step + 1) % num_batches_per_epoch == 0 or (
+                        current_step + 1) == num_batches_per_epoch * FLAGS.num_epochs:
                     path = saver.save(sess, checkpoint_prefix, global_step=current_step)
                     print("Saved model checkpoint to {}\n".format(path))
                     sys.stdout.flush()
@@ -242,7 +245,7 @@ if __name__ == '__main__':
     tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size (default: 64)")
     tf.flags.DEFINE_integer("num_hidden", 100, "Number of hidden layer units (default: 100)")
     tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
-    tf.flags.DEFINE_float("l2_reg_lambda", 0.01, "L2 regularizaion lambda (default: 0.0)")
+    tf.flags.DEFINE_float("l2_reg_lambda", 1e-4, "L2 regularizaion lambda (default: 0.0)")
     tf.flags.DEFINE_integer("most_words", 300000, "Most number of words in vocab (default: 300000)")
     # Training parameters
     tf.flags.DEFINE_integer("seed", 123, "Random seed (default: 123)")
